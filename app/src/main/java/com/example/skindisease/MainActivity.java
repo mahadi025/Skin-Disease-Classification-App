@@ -3,8 +3,10 @@ package com.example.skindisease;
 
 import android.content.Context;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
     private WebView web;
     private ProgressBar progressBar;
-    private String webUrl="https://subaru-nano-resolutions-netherlands.trycloudflare.com";
+    private String webUrl="https://higher-vampire-intro-labels.trycloudflare.com";
     public Context context;
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -45,21 +47,21 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private ValueCallback<Uri[]> mFilePathCallback;
     private String mCameraPhotoPath;
 
-    private static String file_type     = "*/*";
-    private String cam_file_data = null;
-    private ValueCallback<Uri> file_data;
-    private ValueCallback<Uri[]> file_path;
-    private final static int file_req_code = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        web = findViewById(R.id.webView);
+        web = (WebView)findViewById(R.id.webView);
 
 
 
         progressBar=findViewById(R.id.progress);
+        web.clearCache(true);
+        web.setWebViewClient(new WebViewClient());
+        web.getSettings().setAllowContentAccess(true);
+        web.getSettings().setAllowFileAccess(true);
+        web.getSettings().setJavaScriptEnabled(true);
         web.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onProgressChanged(WebView view, int progress) {
@@ -124,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 return true;
             }
 
-            // creating image files (Lollipop only)
             private File createImageFile() throws IOException {
 
                 File imageStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "DirectoryNameHere");
@@ -138,7 +139,6 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 return imageStorageDir;
             }
 
-            // openFileChooser for Android 3.0+
             public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
                 mUploadMessage = uploadMsg;
 
@@ -171,10 +171,6 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
             }
 
-            // openFileChooser for Android < 3.0
-            public void openFileChooser(ValueCallback<Uri> uploadMsg) {
-                openFileChooser(uploadMsg, "");
-            }
             public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
                 openFileChooser(uploadMsg, acceptType);
             }
@@ -182,43 +178,11 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
         });
         web.loadUrl(webUrl);
-        web.getSettings().setJavaScriptEnabled(true);
-        web.setWebViewClient(new WebViewClient());
-        web.getSettings().setAllowContentAccess(true);
-        web.getSettings().setAllowFileAccess(true);
 
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        // code for all versions except of Lollipop
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-
-            if (requestCode == FILECHOOSER_RESULTCODE) {
-                if (null == this.mUploadMessage) {
-                    return;
-                }
-
-                Uri result = null;
-
-                try {
-                    if (resultCode != RESULT_OK) {
-                        result = null;
-                    } else {
-                        // retrieve from the private variable if the intent is null
-                        result = data == null ? mCapturedImageURI : data.getData();
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(getApplicationContext(), "activity :" + e, Toast.LENGTH_LONG).show();
-                }
-
-                mUploadMessage.onReceiveValue(result);
-                mUploadMessage = null;
-            }
-
-        } // end of code for all versions except of Lollipop
-
-        // start of code for Lollipop only
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
             if (requestCode != FILECHOOSER_RESULTCODE || mFilePathCallback == null) {
@@ -246,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             mFilePathCallback.onReceiveValue(results);
             mFilePathCallback = null;
 
-        } // end of code for Lollipop only
+        }
     }
 
     @Override
